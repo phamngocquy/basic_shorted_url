@@ -1,0 +1,38 @@
+version: '3'
+services:
+  back-end:
+    image: ulink
+    environment:
+      - TZ=Asia/Ho_Chi_Minh
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: uvicorn main:app --reload --host 0.0.0.0
+    env_file:
+      - .env
+    volumes:
+      - .:/var/app
+      - ./logs:/var/app/logs
+    ports:
+      - "8020:8000"
+    depends_on:
+      - redis
+      - migration
+
+  migration:
+    image: ulink
+    env_file:
+      - .env
+    command: alembic upgrade head
+    volumes:
+      - .:/var/app
+
+  redis:
+    image: redis:6-alpine
+    restart: always
+    volumes:
+      - redis-data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf
+    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+volumes:
+  redis-data:
